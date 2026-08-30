@@ -1,0 +1,83 @@
+# Blunox runner — a starting-point manifest.
+#
+# The console generates this for you with every value filled in; this copy is for
+# GitOps users who would rather template it themselves. Replace every <ANGLE>
+# placeholder.
+#
+# The runner needs three objects: an identity to read your secrets with, the
+# credential, and the workload itself.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: blunox-runner
+  # Bind this service account to the cloud identity allowed to read your secrets.
+  # The runner authenticates to your secret store with this and holds no static
+  # cloud credential of its own.
+  #
+  # GKE Workload Identity:
+  #   iam.gke.io/gcp-service-account: blunox-runner@<PROJECT>.iam.gserviceaccount.com
+  # EKS IRSA:
+  #   eks.amazonaws.com/role-arn: arn:aws:iam::<ACCOUNT>:role/blunox-runner
+  annotations: {}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: blunox-runner-token
+type: Opaque
+stringData:
+  # From the console, shown once. This is a credential — do not commit a filled-in
+  # copy of this file.
+  RUNNER_TOKEN: <RUNNER_TOKEN>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: blunox-runner
+spec:
+  # One replica by default. Scaling a CDC runner is a deliberate act: replicas
+  # share work, and every replica must run the SAME pinned version.
+  replicas: 1
+  selector:
+    matchLabels: { app: blunox-runner }
+  template:
+    metadata:
+      labels: { app: blunox-runner }
+    spec:
+      serviceAccountName: blunox-runner
+      # The runner flushes its sinks and reaches a checkpoint before exiting, so a
+      # rollout resumes replication instead of replaying it. Give it room.
+      terminationGracePeriodSeconds: 600
+      containers:
+        - name: runner
+          # Pin an immutable version. A moving alias (:stable, :lts) combined with
+          # IfNotPresent can leave two versions running across nodes.
+          image: ghcr.io/blunox-org/runner:<VERSION>
+          envFrom:
+            - secretRef: { name: blunox-runner-token }
+          env:
+            - { name: RUNNER_NAME, value: "<RUNNER_NAME>" }
+            - { name: RUNNER_ENVIRONMENT, value: "<ENVIRONMENT>" }
+            - { name: RUNNER_CAPABILITIES, value: "<CAPABILITIES>" }
+            - { name: RUNNER_BYOC_SECRET_STORES, value: "gcp" }
+          # There is no inbound listener to probe. The runner refreshes a heartbeat
+          # file while its control stream is connected, and `healthcheck` reads it.
+          livenessProbe:
+            exec: { command: ["/app/bin/app", "healthcheck"] }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests: { cpu: "500m", memory: "1Gi" }
+            limits: { memory: "4Gi" }
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        # The root filesystem is read-only; the heartbeat file needs somewhere to live.
+        - name: tmp
+          emptyDir: { medium: Memory }

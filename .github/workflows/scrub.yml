@@ -1,0 +1,31 @@
+name: scrub
+on: [push, pull_request]
+
+# Everything in this repository is world-readable. This job fails the build on the
+# patterns that have historically leaked internal detail into customer-facing
+# material: decision-log references, internal repo paths, internal service names,
+# and internal design-doc filenames.
+#
+# It is deliberately blunt. A false positive costs a rename; a miss costs a
+# disclosure that cannot be taken back.
+jobs:
+  scrub:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No internal references
+        run: |
+          set -uo pipefail
+          rc=0
+          check() { # <label> <regex>
+            if out="$(grep -rInE "$2" --include='*.md' --include='*.yaml' --include='*.yml' . \
+                        --exclude-dir=.git --exclude-dir=.github 2>/dev/null)"; then
+              echo "::error::$1"; echo "$out"; rc=1
+            fi
+          }
+          check "decision-log reference (D-nn)"        '\bD-[0-9]{2,3}\b'
+          check "internal repo path"                   '(deploy|platform|pulse|mira|runner|dev)/[a-z0-9_-]+/[a-z0-9_./-]+'
+          check "internal design doc"                  '[a-z-]+\.html'
+          check "internal service name"                '\b(pulse-control|runner-gateway|connector-registry|context-graph|mira-agent-runtime|mira-builder-worker|mira-approval|platform-approval|pulse-assistant|blunox-auth|memberWiring)\b'
+          check "internal env var"                     '\b(BFF|AUTH|AUDIT|APPROVAL|CATALOG)_[A-Z0-9_]+'
+          exit $rc

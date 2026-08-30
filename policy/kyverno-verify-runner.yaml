@@ -1,0 +1,36 @@
+# Require a valid Blunox signature on every runner image admitted to the cluster.
+#
+# This is stronger than verifying once at install: it also covers node
+# replacements, scale-ups and rollbacks, none of which re-run your install
+# command.
+#
+# Paste the public key from SIGNING.md where indicated. Until the signing key is
+# published this policy will REJECT the runner, so apply it after the key exists.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: blunox-runner-signed
+spec:
+  validationFailureAction: Enforce
+  background: false
+  rules:
+    - name: verify-blunox-runner
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      verifyImages:
+        - imageReferences:
+            - "ghcr.io/blunox-org/runner:*"
+          # The signature is attached to the image and the key is a fixed public
+          # key, so no transparency-log lookup is required or attempted.
+          attestors:
+            - count: 1
+              entries:
+                - keys:
+                    publicKeys: |-
+                      -----BEGIN PUBLIC KEY-----
+                      <PASTE THE KEY FROM SIGNING.md>
+                      -----END PUBLIC KEY-----
+                    rekor:
+                      ignoreTlog: true
