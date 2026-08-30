@@ -21,7 +21,7 @@ spec:
               kinds: [Pod]
       verifyImages:
         - imageReferences:
-            - "ghcr.io/blunox-public/runner:*"
+            - "ghcr.io/blunox-public/blunox-data-runner:*"
           # The signature is attached to the image and the key is a fixed public
           # key, so no transparency-log lookup is required or attempted.
           attestors:
