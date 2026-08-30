@@ -12,8 +12,8 @@ work in **your** cloud. You run it; Blunox runs the control plane.
   metadata — status, checkpoints, lineage — reaches the control plane.
 - **Stateless.** No database, no volumes. Replacing the runner loses nothing.
 
-This repository holds the public artifacts for installing it: the manifest, the
-admission policy, and the image-signing details. It is not the product source.
+This repository holds the public artifacts for installing it: the Kubernetes
+manifest and the install documentation. It is not the product source.
 
 ## Install
 
@@ -91,10 +91,21 @@ Nothing needs to stay reachable for a *running* runner except the control plane
 and your own systems — all capabilities are built into the single image, so no
 registry is contacted at runtime.
 
-## Verifying the image
+## Image integrity
 
-See [SIGNING.md](SIGNING.md). Verification is optional at install and stronger
-enforced at admission control — [`policy/kyverno-verify-runner.yaml`](policy/kyverno-verify-runner.yaml).
+Images are **not signed**. What you get instead is immutable identity: every
+release is published under a version tag that is never moved, and its digest is
+listed in the release notes.
+
+If you want the strongest guarantee available, pin the digest rather than the tag:
+
+```
+ghcr.io/blunox-public/blunox-data-runner@sha256:<digest-from-the-release-notes>
+```
+
+A digest is content-addressed, so a pinned deployment cannot be changed under you
+— the image either matches those bytes or it does not pull at all. Kubernetes
+accepts a digest anywhere a tag is accepted.
 
 ## Versions and upgrades
 
