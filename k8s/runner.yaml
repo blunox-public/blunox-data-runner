@@ -53,7 +53,7 @@ spec:
         - name: runner
           # Pin an immutable version. A moving alias (:stable, :lts) combined with
           # IfNotPresent can leave two versions running across nodes.
-          image: ghcr.io/blunox-org/runner:<VERSION>
+          image: ghcr.io/blunox-public/runner:<VERSION>
           envFrom:
             - secretRef: { name: blunox-runner-token }
           env:

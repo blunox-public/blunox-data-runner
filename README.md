@@ -42,7 +42,7 @@ docker run -d --name blunox-runner --restart unless-stopped \
   -e RUNNER_ENVIRONMENT=prod \
   -e RUNNER_CAPABILITIES=pulse.cdc.postgres \
   -e RUNNER_BYOC_SECRET_STORES=gcp \
-  ghcr.io/blunox-org/runner:<version>
+  ghcr.io/blunox-public/runner:<version>
 ```
 
 > **Do not run the runner on a scale-to-zero platform** (Cloud Run, Lambda,
@@ -98,7 +98,7 @@ enforced at admission control — [`policy/kyverno-verify-runner.yaml`](policy/k
 
 ## Versions and upgrades
 
-Images are published as immutable versions (`ghcr.io/blunox-org/runner:2026.08.0`)
+Images are published as immutable versions (`ghcr.io/blunox-public/runner:2026.08.0`)
 and as moving channel aliases (`:stable`, `:lts`).
 
 **Pin the version, not the channel, on any install running more than one replica.**

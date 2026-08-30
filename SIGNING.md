@@ -1,6 +1,6 @@
 # Image signing and verification
 
-Every published `ghcr.io/blunox-org/runner` image is signed with
+Every published `ghcr.io/blunox-public/runner` image is signed with
 [cosign](https://docs.sigstore.dev/), using a key held in a cloud KMS. The private
 half never leaves the HSM.
 
@@ -22,7 +22,7 @@ fetch, and no network call to a transparency log.
 ## Verifying one image
 
 ```bash
-cosign verify --key blunox.pub ghcr.io/blunox-org/runner:<version>
+cosign verify --key blunox.pub ghcr.io/blunox-public/runner:<version>
 ```
 
 ## Enforcing it continuously
