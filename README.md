@@ -39,7 +39,7 @@ docker run -d --name blunox-runner --restart unless-stopped \
   --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
   -e RUNNER_TOKEN=bnxr_v1_... \
   -e RUNNER_NAME=my-runner \
-  -e RUNNER_ENVIRONMENT=prod \
+  -e RUNNER_PROJECT_ID=proj_... \
   -e RUNNER_CAPABILITIES=pulse.cdc.postgres \
   -e RUNNER_BYOC_SECRET_STORES=gcp \
   ghcr.io/blunox-public/blunox-data-runner:<version>
@@ -55,7 +55,7 @@ docker run -d --name blunox-runner --restart unless-stopped \
 |---|---|---|
 | `RUNNER_TOKEN` | yes | The credential from the console. Carries the runner's identity and the control-plane addresses. Shown once. |
 | `RUNNER_NAME` | yes | Name shown in the console fleet view. |
-| `RUNNER_ENVIRONMENT` | yes | The single environment this runner serves. |
+| `RUNNER_PROJECT_ID` | yes | The single project this runner serves. |
 | `RUNNER_CAPABILITIES` | yes | Comma-separated work types this runner accepts. |
 | `RUNNER_BYOC_SECRET_STORES` | yes | Where to read your credentials from (`gcp` today). |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | no | Your own collector. Unset disables telemetry export entirely. |

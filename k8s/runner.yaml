@@ -58,7 +58,7 @@ spec:
             - secretRef: { name: blunox-runner-token }
           env:
             - { name: RUNNER_NAME, value: "<RUNNER_NAME>" }
-            - { name: RUNNER_ENVIRONMENT, value: "<ENVIRONMENT>" }
+            - { name: RUNNER_PROJECT_ID, value: "<PROJECT_ID>" }
             - { name: RUNNER_CAPABILITIES, value: "<CAPABILITIES>" }
             - { name: RUNNER_BYOC_SECRET_STORES, value: "gcp" }
           # There is no inbound listener to probe. The runner refreshes a heartbeat
