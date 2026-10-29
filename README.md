@@ -31,17 +31,47 @@ kubectl apply -f - <<'YAML'
 YAML
 ```
 
-**Docker / VM** — the runner must stay resident, so run it as a long-lived
-service:
+**VM** — on any Linux VM (amd64) with outbound 443, one script installs it.
+Save the console's **runner.env** block on the VM, then:
 
 ```bash
-docker run -d --name blunox-runner --restart unless-stopped \
+curl -fsSLO https://raw.githubusercontent.com/blunox-public/blunox-data-runner/main/install-runner.sh
+sudo bash install-runner.sh --env-file runner.env \
+  --image ghcr.io/blunox-public/blunox-data-runner:<version>
+```
+
+Or run `sudo bash install-runner.sh --env-file -`, paste the block, and press
+Ctrl-D. Before it starts anything, the script checks:
+
+- the token is well formed, and the control plane answers over HTTP/2 from the VM;
+- on Google Compute Engine, with `RUNNER_BYOC_SECRET_STORES=gcp`, the VM has a
+  service account with the `cloud-platform` scope;
+- Docker is installed. If it is missing on Debian or Ubuntu, the script installs
+  it from the distribution's packages.
+
+It then starts the runner and its SQL parser with a restart policy, so they come
+back after a reboot, and waits until the runner reports `control channel
+connected`. The token is kept in a root-only `0600` file under `/etc/blunox`
+and is never passed on a command line.
+
+| Flag | What it does |
+|---|---|
+| `--env-file FILE` | The console's runner.env block; `-` reads it from the terminal. |
+| `--image REF` | The runner image (default `:stable`). |
+| `--no-sql-parser` | Skip the SQL parser. BigQuery SQL is then refused; replication is unaffected. |
+| `--upgrade --image REF` | Keep the configuration and change only the version. |
+| `--status` | The runner, its containers and its key log lines. |
+| `--uninstall` | Remove the containers and the stored token. Then revoke the runner in the console. |
+
+Read the script before you run it: it is short, and it runs as root.
+
+**Docker by hand** — the same thing without the script. Run it from the
+directory holding `runner.env`, so the token stays in a file:
+
+```bash
+docker run -d --name blunox-runner --restart unless-stopped --stop-timeout 600 \
   --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges \
-  -e RUNNER_TOKEN=bnxr_v1_... \
-  -e RUNNER_NAME=my-runner \
-  -e RUNNER_PROJECT_ID=proj_... \
-  -e RUNNER_CAPABILITIES=pulse.cdc.postgres \
-  -e RUNNER_BYOC_SECRET_STORES=gcp \
+  --env-file runner.env \
   ghcr.io/blunox-public/blunox-data-runner:<version>
 ```
 
